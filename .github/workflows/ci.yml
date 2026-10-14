@@ -1,0 +1,27 @@
+name: Validate MediaLivre Mobile
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '9.12.0'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pip install -r processor/requirements.txt
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check && pnpm test && pnpm build
+      - run: python -m py_compile processor/worker.py
+      - run: python -m unittest discover -s tests -p 'test_worker_*.py'
